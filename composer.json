@@ -18,6 +18,7 @@
     "require": {
         "php": "^7.3|^8.0",
         "fabpot/goutte": "^4.0",
+        "laminas/laminas-text": "^2.8",
         "laravel-zero/framework": "^8.4",
         "symfony/dom-crawler": "^5.2"
     },
