@@ -1,0 +1,26 @@
+{
+  "name": "hello-work",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">     <img title=\"Laravel Zero\" height=\"100\" src=\"https://raw.githubusercontent.com/laravel-zero/docs/master/images/logo/laravel-zero-readme.png\" /> </p>",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "dependencies": {
+    "@nesk/puphpeteer": "^2.0.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lantrinh1999/hello-work.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lantrinh1999/hello-work/issues"
+  },
+  "homepage": "https://github.com/lantrinh1999/hello-work#readme"
+}

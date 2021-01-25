@@ -26,7 +26,8 @@
         "illuminate/log": "^8.0",
         "illuminate/queue": "^8.0",
         "laminas/laminas-text": "^2.8",
-        "laravel-zero/framework": "^8.4"
+        "laravel-zero/framework": "^8.4",
+        "nesk/puphpeteer": "^2.0"
     },
     "require-dev": {
         "mockery/mockery": "^1.4.2",
