@@ -17,6 +17,15 @@
     ],
     "require": {
         "php": "^7.3|^8.0",
+        "fakerphp/faker": "^1.9.1",
+        "guzzlehttp/guzzle": "^6.5.5",
+        "hmazter/laravel-schedule-list": "^2.2.1",
+        "illuminate/bus": "^8.0",
+        "illuminate/database": "^8.0",
+        "illuminate/http": "^8.0",
+        "illuminate/log": "^8.0",
+        "illuminate/queue": "^8.0",
+        "laminas/laminas-text": "^2.8",
         "laravel-zero/framework": "^8.4"
     },
     "require-dev": {
@@ -40,5 +49,5 @@
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
-    "bin": ["application"]
+    "bin": ["hello-work"]
 }
