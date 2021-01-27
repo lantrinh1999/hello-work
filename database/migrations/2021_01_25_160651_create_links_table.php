@@ -19,6 +19,7 @@ class CreateLinksTable extends Migration
             $table->text('link')->nullable();
             $table->tinyInteger('status')->nullable()->default(0);
             $table->tinyInteger('state_code')->nullable()->default(null);
+            $table->bigInteger('job_id')->unsigned()->nullable();
             $table->timestamps();
         });
     }
