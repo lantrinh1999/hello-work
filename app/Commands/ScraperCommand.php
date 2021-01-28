@@ -42,7 +42,7 @@ class ScraperCommand extends Command
         try {
             $this->setStateValue();
             $puppeteer = new Puppeteer;
-            $browser = $puppeteer->launch(['headless' => false, 'slowMo' => 100]);
+            $browser = $puppeteer->launch(['headless' => true, 'slowMo' => 100]);
 
             $page = $browser->newPage();
             $request = $page->goto($this->baseURL, ['waitUntil' => "load"]);
@@ -97,7 +97,7 @@ class ScraperCommand extends Command
                 } else {
                     break;
                 }
-                if((int) date('H') == 1) {
+                if((int) date('H') == 12) {
                     break;
                 }
             }

@@ -21,7 +21,7 @@ class CreateJobsTable extends Migration
             $table->string('referral_deadline')->nullable();
             $table->string('type')->comment('full-time, part-time')->nullable();
             $table->text('hope')->nullable();
-            $table->bigInteger('recruiting_office_id')->unsigned()->nullable();
+            $table->bigInteger('recruiting_office_id')->unsigned()->nullable(); //
             $table->string('wage')->nullable();
             $table->string('holiday')->nullable();
             $table->timestamps();

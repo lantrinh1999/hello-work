@@ -17,6 +17,7 @@
     ],
     "require": {
         "php": "^7.3|^8.0",
+        "fabpot/goutte": "^4.0",
         "fakerphp/faker": "^1.9.1",
         "guzzlehttp/guzzle": "^6.5.5",
         "hmazter/laravel-schedule-list": "^2.2.1",
@@ -28,7 +29,8 @@
         "laminas/laminas-text": "^2.8",
         "laravel-zero/framework": "^8.4",
         "nesk/puphpeteer": "^2.0",
-        "sunra/php-simple-html-dom-parser": "^1.5"
+        "sunra/php-simple-html-dom-parser": "^1.5",
+        "symfony/dom-crawler": "^5.2"
     },
     "require-dev": {
         "mockery/mockery": "^1.4.2",
