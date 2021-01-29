@@ -201,6 +201,10 @@ class DetailScraperCommand extends Command
                                 $dataOffice['location'] = $item['td'];
                             }
 
+                            if ($item['th'] == '法人番号') {
+                                $dataOffice['company_number'] = $item['td'];
+                            }
+
                             // if($item['th'] == '所在地') {
                             //     $dataOffice['location'] = $item['td'];
                             // }
