@@ -25,6 +25,8 @@ class ScraperCommand extends Command
 
     protected $state = '40'; //Fukuoka
 
+    protected $prefectures = [];
+
     protected $baseURL = 'https://www.hellowork.mhlw.go.jp/kensaku/GECA110010.do?action=initDisp&screenId=GECA110010';
 
     public function __construct()
@@ -40,65 +42,78 @@ class ScraperCommand extends Command
     public function handle()
     {
         try {
-            $this->setStateValue();
             $puppeteer = new Puppeteer;
             $browser = $puppeteer->launch(['headless' => true, 'slowMo' => 100]);
 
             $page = $browser->newPage();
             $request = $page->goto($this->baseURL, ['waitUntil' => "load"]);
 
-            // select option
-            $page->select('#ID_tDFK1CmbBox', $this->state);
-            // submit form
-            $page->click("input#ID_searchBtn", ['waitUntil' => "load"]);
-            sleep(5);
-            $page->select('#ID_fwListNaviDispTop', '50');
-            sleep(5);
-            $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
-            $data = $page->evaluate(JsFunction::createWithBody($this->getJs()));
-            if (!empty($data) && count($data) > 0) {
-                $data = collect($data)->map(function ($item, $key) {
-                    return array_merge($item, ['status' => 0, 'state_code' => $this->state]);
-                })->all();
-                if (!empty(count($data))) {
-                    $this->insertData($data);
-                }
+            if (!empty($state = $this->option('state'))) {
+                $this->prefectures = [$state];
+            } else {
+                $this->prefectures = $page->evaluate(JsFunction::createWithBody($this->getPrefectureJs()));
             }
 
-            // step 2
-            $hasNextPage = $page->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
-
-            while (true) {
-                $this->info("Page " . $current_number_page);
-                $page->click("input[name=fwListNaviBtnNext]");
-                sleep(1);
-
-                $hasNextPage = $page->tryCatch->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
-                $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
-                for($i = 0; $i < 30; $i++) {
-                    if (empty($current_number_page)) {
-                        $this->info('Waiting...');
-                        sleep(1);
-                        $hasNextPage = $page->tryCatch->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
-                        $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
-                    } else {
-                        break;
-                    }
+            foreach ($this->prefectures as $index => $prefecture) {
+                if ($index > 0) {
+                    $page = $browser->newPage();
+                    $request = $page->goto($this->baseURL, ['waitUntil' => "load"]);
                 }
-
+                $this->info("Current selected prefecture: {$prefecture}");
+                // select option
+                $page->select('#ID_tDFK1CmbBox', $prefecture);
+                // submit form
+                $page->click("input#ID_searchBtn", ['waitUntil' => "load"]);
+                sleep(5);
+                $page->select('#ID_fwListNaviDispTop', '50');
+                sleep(5);
+                $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
                 $data = $page->evaluate(JsFunction::createWithBody($this->getJs()));
                 if (!empty($data) && count($data) > 0) {
-                    $data = collect($data)->map(function ($item, $key) {
-                        return array_merge($item, ['status' => 0, 'state_code' => $this->state]);
+                    $data = collect($data)->map(function ($item, $key) use ($prefecture) {
+                        return array_merge($item, ['status' => 0, 'state_code' => $prefecture]);
                     })->all();
                     if (!empty(count($data))) {
                         $this->insertData($data);
                     }
-                } else {
-                    break;
                 }
-                if((int) date('H') == 12) {
-                    break;
+
+                // step 2
+                $hasNextPage = $page->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
+
+                while (true) {
+                    $this->info("Page " . $current_number_page);
+                    $page->click("input[name=fwListNaviBtnNext]");
+                    sleep(1);
+
+                    $hasNextPage = $page->tryCatch->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
+                    $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
+                    for($i = 0; $i < 30; $i++) {
+                        $this->info($current_number_page);
+                        if (empty($current_number_page)) {
+                            $this->info('Waiting...');
+                            sleep(1);
+                            $hasNextPage = $page->tryCatch->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
+                            $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
+                        } else {
+                            break;
+                        }
+                    }
+
+                    $data = $page->evaluate(JsFunction::createWithBody($this->getJs()));
+                    if (!empty($data) && count($data) > 0) {
+                        $data = collect($data)->map(function ($item, $key) use ($prefecture) {
+                            return array_merge($item, ['status' => 0, 'state_code' => $prefecture]);
+                        })->all();
+                        if (!empty(count($data))) {
+                            $this->insertData($data);
+                        }
+                    } else {
+                        break;
+                    }
+                    if((int) date('H') == 12) {
+                        break;
+                    }
                 }
             }
 
@@ -127,6 +142,23 @@ class ScraperCommand extends Command
     public function schedule(Schedule $schedule): void
     {
         // $schedule->command(static::class)->everyMinute();
+    }
+
+    protected function getPrefectureJs()
+    {
+        return "
+            const prefectures = [];
+            const options = document.querySelectorAll('#ID_tDFK1CmbBox > option');
+            if (options.length < 1) {
+                return [];
+            }
+            options.forEach(option => {
+                if (option.value && option.value.length > 0) {
+                    prefectures.push(option.value);
+                }
+            });
+            return prefectures;
+        ";
     }
 
     protected function getJs()
