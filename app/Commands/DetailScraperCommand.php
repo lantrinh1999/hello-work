@@ -52,7 +52,10 @@ class DetailScraperCommand extends Command
     {
         $limit = 100;
         $offset = ($page - 1) * $limit;
-        return \DB::table('links')->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
+        return \DB::table('links')
+        // ->where('status', 0)
+        ->where('job_id', '=', NULL)
+        ->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
     }
 
     protected function handleData($data)
@@ -82,8 +85,8 @@ class DetailScraperCommand extends Command
                 $request = $page->goto($data->link, ['waitUntil' => "load"]);
 
                 $job = $page->evaluate(JsFunction::createWithBody($this->jS()));
-                for ($i = 0; $i < 30; $i++) {
-                    $this->info(1);
+                for ($i = 0; $i < 60; $i++) {
+
                     if ($job) {
                         break;
                     } else {
@@ -224,12 +227,16 @@ class DetailScraperCommand extends Command
                             $dataInsert['recruiting_office_id'] = $office_id;
                         }
 
-                        $jobInsert = \DB::table('jobs')->insert($dataInsert);
-                        if ($jobInsert) {
+                        $job_id = \DB::table('jobs')->insertGetId($dataInsert);
+                        if ($job_id) {
+                            $status = 1;
                             $id = $data->id;
                             $check = DB::table('links')
                                 ->where('id', $id)
-                                ->update(['status' => 1]);
+                                ->update(compact('job_id', 'status'));
+                            if($check) {
+                                $this->info('==> CRAWLED');
+                            }
                         } else {
                             $this->info('Insert JOB FAIL');
                         }
