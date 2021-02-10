@@ -53,7 +53,6 @@ class ScraperCommand extends Command
             } else {
                 $this->prefectures = $page->evaluate(JsFunction::createWithBody($this->getPrefectureJs()));
             }
-
             foreach ($this->prefectures as $index => $prefecture) {
                 if ($index > 0) {
                     $page = $browser->newPage();
@@ -64,9 +63,9 @@ class ScraperCommand extends Command
                 $page->select('#ID_tDFK1CmbBox', $prefecture);
                 // submit form
                 $page->click("input#ID_searchBtn", ['waitUntil' => "load"]);
-                sleep(5);
+                sleep(10);
                 $page->select('#ID_fwListNaviDispTop', '50');
-                sleep(5);
+                sleep(10);
                 $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
                 $data = $page->evaluate(JsFunction::createWithBody($this->getJs()));
                 if (!empty($data) && count($data) > 0) {
@@ -82,13 +81,14 @@ class ScraperCommand extends Command
                 $hasNextPage = $page->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
 
                 while (true) {
+                    $lastPage = false;
                     $this->info("Page " . $current_number_page);
                     $page->click("input[name=fwListNaviBtnNext]");
                     sleep(1);
 
                     $hasNextPage = $page->tryCatch->evaluate(JsFunction::createWithBody($this->hasNextPageJS()));
                     $current_number_page = $page->evaluate(JsFunction::createWithBody($this->cnpJS()));
-                    for($i = 0; $i < 30; $i++) {
+                    for($i = 0; $i < 60; $i++) {
                         $this->info($current_number_page);
                         if (empty($current_number_page)) {
                             $this->info('Waiting...');
@@ -101,6 +101,12 @@ class ScraperCommand extends Command
                     }
 
                     $data = $page->evaluate(JsFunction::createWithBody($this->getJs()));
+                    $lastPage = $page->evaluate(JsFunction::createWithBody($this->lastPage()));
+
+                    if($lastPage) {
+                        $this->error('Is Last page. break loop');
+                        break;
+                    }
                     if (!empty($data) && count($data) > 0) {
                         $data = collect($data)->map(function ($item, $key) use ($prefecture) {
                             return array_merge($item, ['status' => 0, 'state_code' => $prefecture]);
@@ -194,8 +200,17 @@ class ScraperCommand extends Command
     protected function nextPageBtn()
     {
         return "
-        if(document.querySelectorAll('iinput[name=fwListNaviBtnNext]:not([disabled])').length) {
-            return document.querySelector('iinput[name=fwListNaviBtnNext]:not([disabled])').value
+        if(document.querySelectorAll('input[name=fwListNaviBtnNext]:not([disabled])').length) {
+            return document.querySelector('input[name=fwListNaviBtnNext]:not([disabled])').value
+        } return false;
+        ";
+    }
+
+    protected function lastPage()
+    {
+        return "
+        if(document.querySelectorAll('input[name=fwListNaviBtnNext]:is([disabled])').length) {
+            return true;
         } return false;
         ";
     }
