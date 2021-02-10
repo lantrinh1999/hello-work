@@ -17,7 +17,7 @@ class DetailScraperCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'detail:scraper';
+    protected $signature = 'detail:scraper {--state=}';
 
     /**
      * The description of the command.
@@ -37,7 +37,7 @@ class DetailScraperCommand extends Command
     {
         $page = 1;
         try {
-            while ($data = $this->getLinks($page)) {
+            while (count($data = $this->getLinks($page))) {
                 $this->info("Page $page");
                 // $this->getData2($data);
                 $this->getData($data);
@@ -52,10 +52,14 @@ class DetailScraperCommand extends Command
     {
         $limit = 100;
         $offset = ($page - 1) * $limit;
-        return \DB::table('links')
-        // ->where('status', 0)
-        ->where('job_id', '=', NULL)
-        ->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
+        $data = \DB::table('links')->where('job_id', '=', NULL);
+        $state = $this->option('state');
+        if(!empty((int)$state)) {
+            $data = $data->where('state_code', $state);
+            $this->info("- Crawl job from state code = $state");
+        }
+        $data = $data->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
+        return $data;
     }
 
     protected function handleData($data)
@@ -245,8 +249,12 @@ class DetailScraperCommand extends Command
                 }
 
             } catch (\Throwable $th) {
-                dd($th->getMessage());
+                // dd($th->getMessage());
                 \Log::error($th->getMessage());
+            }
+
+            if((int) date('H') == 12) {
+                break;
             }
         }
     }
