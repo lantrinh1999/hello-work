@@ -30,6 +30,9 @@ class CreateJobsTable extends Migration
             $table->text('contract')->nullable();
             $table->text('employment_period')->nullable();
             $table->text('work_place')->nullable();
+            $table->text('station')->nullable();
+            $table->text('min_salary')->nullable();
+            $table->text('max_salary')->nullable();
             $table->text('private_car_commute')->nullable();
             $table->text('possibility_of_transfer')->nullable();
             $table->text('age')->nullable();

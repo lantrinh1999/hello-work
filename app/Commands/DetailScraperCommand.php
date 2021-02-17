@@ -19,6 +19,8 @@ class DetailScraperCommand extends Command
      */
     protected $signature = 'detail:scraper {--state=}';
 
+    protected $dataInsert = [];
+
     /**
      * The description of the command.
      *
@@ -58,13 +60,18 @@ class DetailScraperCommand extends Command
             $data = $data->where('state_code', $state);
             $this->info("- Crawl job from state code = $state");
         }
-        $data = $data->limit($limit)->offset($offset)->orderBy('id', 'desc')->get();
+        $data = $data->limit($limit)->offset($offset)->orderBy('id', 'asc')->get();
         return $data;
     }
 
     protected function handleData($data)
     {
         return $this->data[] = $data;
+    }
+
+    protected function setdataInsert($data)
+    {
+        return $this->dataInsert = array_merge($data, $this->dataInsert);
     }
     protected function resetData()
     {
@@ -103,21 +110,39 @@ class DetailScraperCommand extends Command
                 $crawler = new Crawler($data_);
                 $table = $crawler->filter('.normal.mb1');
                 if (!empty($table->count())) {
+                    $dataInsert = [];
+                    $dataOffice = [];
                     $table->each(function ($node) use ($job) {
                         $tr = $node->filter('tr');
                         if (!empty($tr->count())) {
                             $tr->each(function ($no) use ($job) {
                                 $th = $no->filter('th')->text();
                                 $td = $no->filter('td')->text();
+                                $dataInsert = [];
+                                if (!empty($no->filter('#ID_shgBsJusho')->count())) {
+                                    $work_place = $no->filter('#ID_shgBsJusho')->text();
+                                    $dataInsert['work_place'] = $work_place;
+                                    $this->setdataInsert($dataInsert);
+                                }
+                                if (!empty($no->filter('#ID_khky')->count())) {
+                                    $salary = explode("〜", $no->filter('#ID_khky')->first()->text());
+                                    $dataInsert["min_salary"] = $salary[0];
+                                    $dataInsert["max_salary"] = $salary[1];
+                                    $this->setdataInsert($dataInsert);
+                                }
+
+                                if (!empty($no->filter('#ID_shgBsMyorEki')->count())) {
+                                    $station = $no->filter('#ID_shgBsMyorEki')->text();
+                                    $dataInsert['station'] = $station;
+                                    $this->setdataInsert($dataInsert);
+                                }
                                 $this->handleData(compact('th', 'td'));
                             });
                         }
                     });
                     $job = $this->getDataCrawl();
-
+                    $dataInsert = $this->dataInsert;
                     if (!empty(count($job))) {
-                        $dataInsert = [];
-                        $dataOffice = [];
                         foreach ($job as $item) {
                             if ($item['th'] == '求人番号') {
                                 $dataInsert['job_number'] = $item['td'];
@@ -163,9 +188,9 @@ class DetailScraperCommand extends Command
                                 $dataInsert['employment_period'] = $item['td'];
                             }
 
-                            if ($item['th'] == '就業場所') {
-                                $dataInsert['work_place'] = $item['td'];
-                            }
+                            // if ($item['th'] == '就業場所') {
+                            //     $dataInsert['work_place'] = $item['td'];
+                            // }
 
                             if ($item['th'] == 'マイカー通勤') {
                                 $dataInsert['private_car_commute'] = $item['td'];
@@ -249,7 +274,7 @@ class DetailScraperCommand extends Command
                 }
 
             } catch (\Throwable $th) {
-                // dd($th->getMessage());
+                throw $th;
                 \Log::error($th->getMessage());
             }
 
